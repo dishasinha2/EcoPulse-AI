@@ -1,0 +1,36 @@
+services:
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ecopulse-backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ecopulse-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+  ai-worker:
+    build:
+      context: ./ai-worker
+      dockerfile: Dockerfile
+    container_name: ecopulse-ai-worker
+    depends_on:
+      - redis
+      - backend
+
+  redis:
+    image: redis:alpine
+    container_name: ecopulse-redis
+    ports:
+      - "6379:6379"
