@@ -8,7 +8,26 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    environment:
+      - REDIS_HOST=redis
+      - DB_HOST=db
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=postgresql+asyncpg://ecopulse:ecopulse@db:5432/ecopulse
+      - ELECTRICITYMAPS_TOKEN=${ELECTRICITYMAPS_TOKEN:-}
+      - CARBON_REGION=${CARBON_REGION:-US-CAL-CISO}
+      - CARBON_CACHE_TTL_SECONDS=60
+      - SCHEDULER_INTERVAL_SECONDS=30
+      - API_RATE_LIMIT_PER_MINUTE=120
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-*}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
 
   frontend:
     build:
@@ -18,7 +37,8 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
   ai-worker:
     build:
@@ -26,11 +46,43 @@ services:
       dockerfile: Dockerfile
     container_name: ecopulse-ai-worker
     depends_on:
-      - redis
-      - backend
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_URL=redis://redis:6379/0
+      - JOB_ID=demo-job
+      - TRAIN_STEP_SECONDS=1
 
   redis:
     image: redis:alpine
     container_name: ecopulse-redis
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  db:
+    image: postgres:16-alpine
+    container_name: ecopulse-db
+    environment:
+      - POSTGRES_DB=ecopulse
+      - POSTGRES_USER=ecopulse
+      - POSTGRES_PASSWORD=ecopulse
+    ports:
+      - "5432:5432"
+    volumes:
+      - ecopulse_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ecopulse -d ecopulse"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  ecopulse_pgdata:

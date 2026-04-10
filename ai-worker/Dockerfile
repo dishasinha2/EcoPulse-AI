@@ -4,6 +4,6 @@ WORKDIR /app
 
 COPY . .
 
-RUN pip install torch pytorch-lightning
+RUN pip install --no-cache-dir redis
 
 CMD ["python","worker.py"]
