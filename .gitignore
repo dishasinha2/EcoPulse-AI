@@ -1,0 +1,7 @@
+# Local dev artifacts
+node_modules/
+.vite/
+*.log
+vite.err
+vite.log
+
