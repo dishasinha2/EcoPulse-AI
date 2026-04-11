@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Local dev artifacts
 node_modules/
 .vite/
@@ -5,3 +6,6 @@ node_modules/
 vite.err
 vite.log
 
+=======
+.env
+>>>>>>> 4bac7c1 (fixed worker, integrated redis, added real carbon API)
